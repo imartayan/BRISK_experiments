@@ -2,7 +2,7 @@ import runner
 import os
 
 
-PARAMS = {"k": 31, "prefix_bits": 28, "timeout": 300}
+PARAMS = {"k": 31, "m": 21, "b": 13, "prefix_bits": 28, "threads": 1, "timeout": 300}
 FOF_BUILD = "fof_build.txt"
 FOF_QUERY = "fof_query.txt"
 BUILD = []
