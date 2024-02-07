@@ -4,6 +4,7 @@ out
 tmp
 __pycache__
 .DS_Store
+jellyfish
 *.fa
 *.gz
 *.cbl
