@@ -1,0 +1,6 @@
+[submodule "bifrost"]
+	path = bifrost
+	url = https://github.com/pmelsted/bifrost.git
+[submodule "CBL"]
+	path = CBL
+	url = https://github.com/imartayan/CBL.git

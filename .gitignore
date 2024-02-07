@@ -1,0 +1,13 @@
+data
+plot
+out
+tmp
+__pycache__
+.DS_Store
+*.fa
+*.gz
+*.cbl
+*.bfi
+*.tsv
+*.log
+*.errlog
