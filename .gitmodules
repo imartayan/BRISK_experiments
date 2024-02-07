@@ -4,3 +4,7 @@
 [submodule "CBL"]
 	path = CBL
 	url = https://github.com/imartayan/CBL.git
+[submodule "Brisk"]
+	path = Brisk
+	url = https://github.com/Malfoy/Brisk.git
+	branch = debug
