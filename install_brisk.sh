@@ -2,7 +2,5 @@
 set -euxo pipefail
 
 cd Brisk
-mkdir -p build
-cd build
-cmake ..
+cmake .
 make -j
