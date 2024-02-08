@@ -51,5 +51,6 @@ def build(fasta_file, **params):
     )
     for tool in TOOLS["build"]:
         time, mem = CLI[tool].build(fasta_file, **params)
-        update_data(output, field=tool, time=time, mem=mem)
+        if time and mem:
+            update_data(output, field=tool, time=time, mem=mem)
     update_data(output, kmers=run_cbl.count(fasta_file, **params))
