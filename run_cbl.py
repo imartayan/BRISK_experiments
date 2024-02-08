@@ -10,6 +10,9 @@ def index_path(fasta_file):
 def build(fasta_file, **params):
     k = params["k"]
     prefix_bits = params["prefix_bits"]
+    threads = params["threads"]
+    if k > 59 or threads > 1:
+        return None, None
     os.makedirs(OUT_FOLDER, exist_ok=True)
     prefix = f"{OUT_FOLDER}/{get_basename(fasta_file)}"
     cbl_file = prefix + ".cbl"
