@@ -45,7 +45,7 @@ def measure_time(command, **params):
     """
     Measure time (in s) and memory usage (in KB) of a command
     """
-    _, err = run_cmd(f"{GNU_TIME} -f '%U %M' {command}", **params)
+    _, err = run_cmd(f"{GNU_TIME} -f '%e %M' {command}", **params)
     try:
         time_s, mem_kb = err.splitlines()[-1].split()
         return float(time_s), int(mem_kb)
