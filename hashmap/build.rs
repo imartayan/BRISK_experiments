@@ -14,7 +14,7 @@ fn build_constants() {
 
     println!("cargo:rerun-if-env-changed=K");
     let k: usize = std::env::var("K")
-        .unwrap_or_else(|_| "25".into())
+        .unwrap_or_else(|_| "31".into())
         .parse()
         .expect("Failed to parse K");
     assert!(k >= 1, "K must be ≥ 1");

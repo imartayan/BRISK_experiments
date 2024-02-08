@@ -1,11 +1,13 @@
-use bincode::{deserialize_from, serialize_into};
+use bincode::{DefaultOptions, Options};
 use cbl::kmer::{IntKmer, Kmer};
 use clap::{Args, Parser, Subcommand};
-use needletail::parse_fastx_file;
+use needletail::{parse_fastx_file, FastxReader};
+use serde::{de::DeserializeOwned, Serialize};
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufReader, BufWriter};
+use std::path::Path;
 
 // Loads runtime-provided constants for which declarations
 // will be generated at `$OUT_DIR/constants.rs`.
@@ -24,9 +26,13 @@ struct Cli {
 
 #[derive(Subcommand, Debug)]
 enum Command {
+    /// Build an index containing the k-mers of a FASTA/Q file
     Build(BuildArgs),
+    /// Query an index for every k-mer contained in a FASTA/Q file
     Query(QueryArgs),
+    /// Add the k-mers of a FASTA/Q file to an index
     Insert(UpdateArgs),
+    /// Remove the k-mers of a FASTA/Q file from an index
     Remove(UpdateArgs),
 }
 
@@ -34,7 +40,7 @@ enum Command {
 struct BuildArgs {
     /// Input file (FASTA/Q, possibly gzipped)
     input: String,
-    /// Output file (defaults to <input>.hash)
+    /// Output file (no serialization by default)
     #[arg(short, long)]
     output: Option<String>,
 }
@@ -53,9 +59,41 @@ struct UpdateArgs {
     index: String,
     /// Input file to query (FASTA/Q, possibly gzipped)
     input: String,
-    /// Output file (otherwise overwrite the index file)
+    /// Output file (no serialization by default)
     #[arg(short, long)]
     output: Option<String>,
+}
+
+fn read_fasta<P: AsRef<Path> + Copy>(path: P) -> Box<dyn FastxReader> {
+    parse_fastx_file(path)
+        .unwrap_or_else(|_| panic!("Failed to open {}", path.as_ref().to_str().unwrap()))
+}
+
+fn read_index<D: DeserializeOwned, P: AsRef<Path> + Copy>(path: P) -> D {
+    let index = File::open(path)
+        .unwrap_or_else(|_| panic!("Failed to open {}", path.as_ref().to_str().unwrap()));
+    let reader = BufReader::new(index);
+    eprintln!(
+        "Reading the index stored in {}",
+        path.as_ref().to_str().unwrap()
+    );
+    DefaultOptions::new()
+        .with_varint_encoding()
+        .reject_trailing_bytes()
+        .deserialize_from(reader)
+        .unwrap()
+}
+
+fn write_index<S: Serialize, P: AsRef<Path> + Copy>(index: &S, path: P) {
+    let output = File::create(path)
+        .unwrap_or_else(|_| panic!("Failed to open {}", path.as_ref().to_str().unwrap()));
+    let mut writer = BufWriter::new(output);
+    eprintln!("Writing the index to {}", path.as_ref().to_str().unwrap());
+    DefaultOptions::new()
+        .with_varint_encoding()
+        .reject_trailing_bytes()
+        .serialize_into(&mut writer, &index)
+        .unwrap();
 }
 
 fn main() {
@@ -63,15 +101,8 @@ fn main() {
     match args.command {
         Command::Build(args) => {
             let input_filename = args.input.as_str();
-            let output_filename = if let Some(filename) = args.output {
-                filename
-            } else {
-                input_filename.to_owned() + ".hash"
-            };
-
             let mut map = HashMap::new();
-            let mut reader = parse_fastx_file(input_filename)
-                .unwrap_or_else(|_| panic!("Failed to open {input_filename}"));
+            let mut reader = read_fasta(input_filename);
             eprintln!("Building the index of {K}-mers contained in {input_filename}");
             while let Some(record) = reader.next() {
                 let seqrec = record.unwrap_or_else(|_| panic!("Invalid record"));
@@ -81,25 +112,15 @@ fn main() {
                         .or_insert(1u8);
                 }
             }
-
-            let output = File::create(output_filename.as_str())
-                .unwrap_or_else(|_| panic!("Failed to open {output_filename}"));
-            let mut writer = BufWriter::new(output);
-            eprintln!("Writing the index to {output_filename}");
-            serialize_into(&mut writer, &map).unwrap();
+            if let Some(output_filename) = args.output {
+                write_index(&map, output_filename.as_str());
+            }
         }
         Command::Query(args) => {
             let index_filename = args.index.as_str();
             let input_filename = args.input.as_str();
-
-            let index = File::open(index_filename)
-                .unwrap_or_else(|_| panic!("Failed to open {index_filename}"));
-            let reader = BufReader::new(index);
-            eprintln!("Reading the index stored in {index_filename}");
-            let map: HashMap<IntKmer<K, KT>, u8> = deserialize_from(reader).unwrap();
-
-            let mut reader = parse_fastx_file(input_filename)
-                .unwrap_or_else(|_| panic!("Failed to open {input_filename}"));
+            let map: HashMap<IntKmer<K, KT>, u8> = read_index(index_filename);
+            let mut reader = read_fasta(input_filename);
             eprintln!("Querying the {K}-mers contained in {input_filename}");
             let mut total = 0usize;
             let mut positive = 0usize;
@@ -121,20 +142,8 @@ fn main() {
         Command::Insert(args) => {
             let index_filename = args.index.as_str();
             let input_filename = args.input.as_str();
-            let output_filename = if let Some(filename) = args.output {
-                filename
-            } else {
-                index_filename.to_owned()
-            };
-
-            let index = File::open(index_filename)
-                .unwrap_or_else(|_| panic!("Failed to open {index_filename}"));
-            let reader = BufReader::new(index);
-            eprintln!("Reading the index stored in {index_filename}");
-            let mut map: HashMap<IntKmer<K, KT>, u8> = deserialize_from(reader).unwrap();
-
-            let mut reader = parse_fastx_file(input_filename)
-                .unwrap_or_else(|_| panic!("Failed to open {input_filename}"));
+            let mut map: HashMap<IntKmer<K, KT>, u8> = read_index(index_filename);
+            let mut reader = read_fasta(input_filename);
             eprintln!("Adding the {K}-mers contained in {input_filename} to the index");
             while let Some(record) = reader.next() {
                 let seqrec = record.unwrap_or_else(|_| panic!("Invalid record"));
@@ -144,30 +153,15 @@ fn main() {
                         .or_insert(1u8);
                 }
             }
-
-            let output = File::create(output_filename.as_str())
-                .unwrap_or_else(|_| panic!("Failed to open {output_filename}"));
-            let mut writer = BufWriter::new(output);
-            eprintln!("Writing the updated index to {output_filename}");
-            serialize_into(&mut writer, &map).unwrap();
+            if let Some(output_filename) = args.output {
+                write_index(&map, output_filename.as_str());
+            }
         }
         Command::Remove(args) => {
             let index_filename = args.index.as_str();
             let input_filename = args.input.as_str();
-            let output_filename = if let Some(filename) = args.output {
-                filename
-            } else {
-                index_filename.to_owned()
-            };
-
-            let index = File::open(index_filename)
-                .unwrap_or_else(|_| panic!("Failed to open {index_filename}"));
-            let reader = BufReader::new(index);
-            eprintln!("Reading the index stored in {index_filename}");
-            let mut map: HashMap<IntKmer<K, KT>, u8> = deserialize_from(reader).unwrap();
-
-            let mut reader = parse_fastx_file(input_filename)
-                .unwrap_or_else(|_| panic!("Failed to open {input_filename}"));
+            let mut map: HashMap<IntKmer<K, KT>, u8> = read_index(index_filename);
+            let mut reader = read_fasta(input_filename);
             eprintln!("Removing the {K}-mers contained in {input_filename} to the index");
             while let Some(record) = reader.next() {
                 let seqrec = record.unwrap_or_else(|_| panic!("Invalid record"));
@@ -182,12 +176,9 @@ fn main() {
                     }
                 }
             }
-
-            let output = File::create(output_filename.as_str())
-                .unwrap_or_else(|_| panic!("Failed to open {output_filename}"));
-            let mut writer = BufWriter::new(output);
-            eprintln!("Writing the updated index to {output_filename}");
-            serialize_into(&mut writer, &map).unwrap();
+            if let Some(output_filename) = args.output {
+                write_index(&map, output_filename.as_str());
+            }
         }
     }
 }
