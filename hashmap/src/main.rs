@@ -40,7 +40,7 @@ enum Command {
 struct BuildArgs {
     /// Input file (FASTA/Q, possibly gzipped)
     input: String,
-    /// Output file (no output by default)
+    /// Output file (no serialization by default)
     #[arg(short, long)]
     output: Option<String>,
 }
@@ -59,7 +59,7 @@ struct UpdateArgs {
     index: String,
     /// Input file to query (FASTA/Q, possibly gzipped)
     input: String,
-    /// Output file (otherwise overwrite the index file)
+    /// Output file (no serialization by default)
     #[arg(short, long)]
     output: Option<String>,
 }
