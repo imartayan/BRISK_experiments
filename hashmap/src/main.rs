@@ -142,11 +142,6 @@ fn main() {
         Command::Insert(args) => {
             let index_filename = args.index.as_str();
             let input_filename = args.input.as_str();
-            let output_filename = if let Some(filename) = args.output {
-                filename
-            } else {
-                index_filename.to_owned()
-            };
             let mut map: HashMap<IntKmer<K, KT>, u8> = read_index(index_filename);
             let mut reader = read_fasta(input_filename);
             eprintln!("Adding the {K}-mers contained in {input_filename} to the index");
@@ -158,16 +153,13 @@ fn main() {
                         .or_insert(1u8);
                 }
             }
-            write_index(&map, output_filename.as_str());
+            if let Some(output_filename) = args.output {
+                write_index(&map, output_filename.as_str());
+            }
         }
         Command::Remove(args) => {
             let index_filename = args.index.as_str();
             let input_filename = args.input.as_str();
-            let output_filename = if let Some(filename) = args.output {
-                filename
-            } else {
-                index_filename.to_owned()
-            };
             let mut map: HashMap<IntKmer<K, KT>, u8> = read_index(index_filename);
             let mut reader = read_fasta(input_filename);
             eprintln!("Removing the {K}-mers contained in {input_filename} to the index");
@@ -184,7 +176,9 @@ fn main() {
                     }
                 }
             }
-            write_index(&map, output_filename.as_str());
+            if let Some(output_filename) = args.output {
+                write_index(&map, output_filename.as_str());
+            }
         }
     }
 }
