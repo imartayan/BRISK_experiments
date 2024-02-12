@@ -30,10 +30,7 @@ bash install_all.sh
 
 ## Running the experiments
 
-The experiments are divided into two parts: building indexes from FASTA files and querying these indexes.
-The files to build must be written in `fof_build.txt` (one file per line) and those to query in `fof_query.txt` (one file per line, each linked to the corresponding line in `fof_build.txt`).
-
-The files currently listed in `fof_build.txt` and `fof_query.txt` can be downloaded from the [NCBI database](https://www.ncbi.nlm.nih.gov/).
+The experiments will build an index for each file listed in `fof_build.txt` (one file per line), and will count their *k*-mers.
 
 You can run all the experiments with
 ```sh
