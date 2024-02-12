@@ -10,79 +10,33 @@ PLOT_FOLDER = "plot"
 PLOT_FORMAT = ".png"
 FONT_SIZE = 14
 MARKER_SIZE = 100
-SINGLE_TASKS = ["build", "query_self"]
-QUERY_TASKS = ["query_other", "insert", "remove"]
-SET_TASKS = ["merge", "intersect"]
-TASKS = SINGLE_TASKS + QUERY_TASKS + SET_TASKS
+SINGLE_TASKS = ["build"]
+TASKS = SINGLE_TASKS
 TOOLS = {
-    "build": ["CBL", "HashMap", "Bifrost"],
-    "size": ["CBL", "HashMap", "Bifrost"],
-    "query_self": ["CBL", "HashMap", "Bifrost"],
-    "query_other": ["CBL", "HashMap", "Bifrost"],
-    "insert": ["CBL", "HashMap", "Bifrost"],
-    "remove": ["CBL", "HashMap"],
-    "pareto": ["CBL", "HashMap", "Bifrost"],
+    "build": ["Brisk", "Jellyfish", "HashMap", "Bifrost", "CBL"],
+    "pareto": [],
 }
 MARKER = {
-    "CBL": "o",
-    "SSHash": "*",
-    "SBWT": "s",
-    "Bifrost": "P",
-    "BufBOSS": "D",
-    "DynamicBOSS": "X",
+    "Brisk": "o",
+    "Jellyfish": "s",
     "HashMap": "^",
+    "CBL": "*",
+    "Bifrost": "P",
 }
 COLOR = {
-    "CBL": "tab:blue",
-    "SSHash": "tab:pink",
-    "SBWT": "tab:purple",
-    "Bifrost": "tab:green",
-    "BufBOSS": "tab:orange",
-    "DynamicBOSS": "tab:brown",
+    "Brisk": "tab:blue",
+    "Jellyfish": "tab:green",
     "HashMap": "tab:red",
+    "CBL": "tab:purple",
+    "Bifrost": "tab:orange",
 }
 LABEL = {t: t for t in MARKER}
-LABEL["DynamicBOSS"] = "DynBOSS"
 LABEL["build"] = {
     "time": "Construction time (in s)",
     "mem": "RAM usage during construction (in MB)",
     "size": "Index size on disk (in bytes)",
     "bytes": "Input size (in bytes)",
     "kmers": "# $k$-mers",
-}
-LABEL["query_self"] = {
-    "time": "Time for positive queries (in s)",
-    "mem": "RAM usage for positive queries (in MB)",
-    "bytes": "Query size (in bytes)",
-    "kmers": "# queried $k$-mers",
-}
-LABEL["query_other"] = {
-    "time": "Time for random queries (in s)",
-    "mem": "RAM usage for random queries (in MB)",
-    "query_bytes": "Query size (in bytes)",
-    "query_kmers": "# queried $k$-mers",
-}
-LABEL["insert"] = {
-    "time": "Time for insertions (in s)",
-    "mem": "RAM usage during insertions (in MB)",
-    "query_bytes": "Query size (in bytes)",
-    "query_kmers": "# inserted $k$-mers",
-}
-LABEL["remove"] = {
-    "time": "Time for deletions (in s)",
-    "mem": "RAM usage during deletions (in MB)",
-    "query_bytes": "Query size (in bytes)",
-    "query_kmers": "# deleted $k$-mers",
-}
-LABEL["merge"] = {
-    "time": "Time for union (in s)",
-    "mem": "RAM usage during union (in MB)",
-    "total_kmers": "total # $k$-mers",
-}
-LABEL["intersect"] = {
-    "time": "Time for intersection (in s)",
-    "mem": "RAM usage during intersection (in MB)",
-    "total_kmers": "total # $k$-mers",
 }
 DATA_FILES = os.listdir(DATA_FOLDER)
 DATA = {task: [] for task in TASKS}
@@ -95,9 +49,6 @@ for filename in DATA_FILES:
                 if filename.startswith(task):
                     DATA[task].append(json.load(f))
                     break
-for task in SET_TASKS:
-    for d in DATA[task]:
-        d["total_kmers"] = d["kmers"] + d["query_kmers"]
 
 
 def plot_task(task, ykey, xkey, name=None):
@@ -206,17 +157,6 @@ if __name__ == "__main__":
         plot_task(task, "time", "bytes")
         plot_task(task, "time", "kmers")
         plot_task(task, "mem", "kmers")
-    for task in QUERY_TASKS:
-        print(f"Plotting {task}")
-        plot_task(task, "time", "query_bytes")
-        plot_task(task, "time", "query_kmers")
-        plot_task(task, "mem", "query_kmers")
-    for task in SET_TASKS:
-        print(f"Plotting {task}")
-        plot_task(task, "time", "total_kmers")
-        plot_task(task, "mem", "total_kmers")
     for task in TASKS:
-        print(f"Plotting pareto for {task}")
         plot_pareto(task, threshold=2e7)
-    plot_task("build", "size", "kmers")
     shutil.make_archive(PLOT_FOLDER, "zip", PLOT_FOLDER)
