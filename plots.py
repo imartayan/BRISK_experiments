@@ -154,7 +154,6 @@ def ncol(n):
 if __name__ == "__main__":
     for task in SINGLE_TASKS:
         print(f"Plotting {task}")
-        plot_task(task, "time", "bytes")
         plot_task(task, "time", "kmers")
         plot_task(task, "mem", "kmers")
     for task in TASKS:
