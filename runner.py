@@ -17,7 +17,7 @@ CLI = {
     "Jellyfish": run_jellyfish,
 }
 TOOLS = {
-    "build": ["Brisk", "Jellyfish", "HashMap", "Bifrost", "CBL"],
+    "build": ["Brisk", "Jellyfish", "HashMap", "CBL"],
 }
 
 

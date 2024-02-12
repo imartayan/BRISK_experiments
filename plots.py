@@ -13,7 +13,7 @@ MARKER_SIZE = 100
 SINGLE_TASKS = ["build"]
 TASKS = SINGLE_TASKS
 TOOLS = {
-    "build": ["Brisk", "Jellyfish", "HashMap", "Bifrost", "CBL"],
+    "build": ["Brisk", "Jellyfish", "HashMap", "CBL"],
     "pareto": [],
 }
 MARKER = {
