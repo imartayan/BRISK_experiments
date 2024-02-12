@@ -41,16 +41,23 @@ def run_cmd(command, **params):
         return None, None
 
 
+def measure_time_output(command, **params):
+    """
+    Measure time (in s) and memory usage (in KB) of a command, and return its output
+    """
+    out, err = run_cmd(f"{GNU_TIME} -f '%e %M' {command}", **params)
+    try:
+        time_s, mem_kb = err.splitlines()[-1].split()
+        return float(time_s), int(mem_kb), out, err
+    except Exception:
+        return float("inf"), float("inf"), out, err
+
+
 def measure_time(command, **params):
     """
     Measure time (in s) and memory usage (in KB) of a command
     """
-    _, err = run_cmd(f"{GNU_TIME} -f '%e %M' {command}", **params)
-    try:
-        time_s, mem_kb = err.splitlines()[-1].split()
-        return float(time_s), int(mem_kb)
-    except Exception:
-        return float("inf"), float("inf")
+    return measure_time_output(command, **params)[:2]
 
 
 def get_basename(filename):
