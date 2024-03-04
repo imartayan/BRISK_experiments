@@ -54,7 +54,7 @@ def build_filename(prefix, fasta_file, **params):
 
 def build(fasta_file, **params):
     output = build_filename("build", fasta_file, **params)
-    run_cmd(f"cd kmer_count && K={params['k']} cargo build --release")
+    run_cmd(f"cd kmer_count && K={params['k']} cargo build --release --offline")
     out, _ = run_cmd(f"./kmer_count/target/release/kmer_count {fasta_file}")
     update_data(
         output,
