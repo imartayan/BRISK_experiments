@@ -9,7 +9,10 @@ def build(fasta_file, **params):
     threads = params["threads"]
     _, mem, out, _ = measure_time_output(
         f"./Brisk/counter -f {fasta_file} -k {k} -m {m} -b {b} -t {threads} --mode 1",
-        **params
+        **params,
     )
-    time = float(out.splitlines()[4].split(":")[1].strip()[:-1])
-    return time, mem
+    try:
+        time = float(out.splitlines()[4].split(":")[1].strip()[:-1])
+        return time, mem
+    except Exception:
+        return float("inf"), float("inf")
