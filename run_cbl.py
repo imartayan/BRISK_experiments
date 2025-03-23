@@ -9,7 +9,7 @@ def build(fasta_file, **params):
     if k > 59 or threads > 1:
         return None, None
     run_cmd(
-        f"cd CBL && K={k} PREFIX_BITS={prefix_bits} cargo +nightly build --release --examples --offline"
+        f"cd CBL && K={k} PREFIX_BITS={prefix_bits} cargo +nightly build --release --example cbl --offline"
     )
     return measure_time(
         f"./CBL/target/release/examples/cbl build {fasta_file}", **params

@@ -12,9 +12,9 @@ cargo build --release
 cd ..
 
 cd hashmap
-cargo build --release
+cargo +nightly build --release
 cd ..
 
 cd CBL
-cargo +nightly build --release --examples
+cargo +nightly build --release --example cbl
 cd ..
